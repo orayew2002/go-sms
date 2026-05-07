@@ -3,7 +3,7 @@ package sms
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -16,26 +16,29 @@ import (
 func Run(ctx context.Context) error {
 	c, err := cache.NewCacheClient(ctx)
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
 	}
-
-	s, err := addapter.DefaultSmsService()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	fmt.Println("redis success connected")
 
 	var clients []string
 	clientJSON, _ := os.ReadFile(utils.GetEnvD("CLIENTS_FILE_PATH", "clients.json"))
 	err = json.Unmarshal(clientJSON, &clients)
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
 	}
+	fmt.Println("clients success parsed")
+
+	s, err := addapter.DefaultSmsService()
+	if err != nil {
+		return err
+	}
+	fmt.Println("smpp success connected")
 
 	h := handler.NewHandler(nil, s, c)
-
 	r := gin.Default()
 	r.POST("messages", h.Send)
 	r.GET("messages/:id", h.Get)
 
+	fmt.Println("running server")
 	return r.Run()
 }
