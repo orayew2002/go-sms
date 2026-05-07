@@ -1,10 +1,11 @@
 package handler
 
 import (
+	"errors"
 	"log"
 	"os"
-	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/fiorix/go-smpp/smpp"
@@ -21,6 +22,7 @@ type Handler struct {
 	smm            *addapter.SmsService
 	cache          *redis.Client
 	default_number string
+	numbers        []string
 	sms_ttl        time.Duration
 }
 
@@ -30,11 +32,17 @@ func NewHandler(keys []string, smm *addapter.SmsService, c *redis.Client) *Handl
 		log.Fatal(err.Error())
 	}
 
+	numbers := strings.Split(utils.GetEnv("SMS_NUMBER"), ",")
+	if len(numbers) == 0 {
+		log.Fatal(errors.New("need min 1 number"))
+	}
+
 	return &Handler{
 		secret_key:     keys,
 		smm:            smm,
 		cache:          c,
-		default_number: utils.GetEnv("SMS_NUMBER"),
+		default_number: numbers[0],
+		numbers:        numbers,
 		sms_ttl:        time.Second * time.Duration(redisLifeTime),
 	}
 }
@@ -46,13 +54,18 @@ func (h *Handler) Send(c *gin.Context) {
 		return
 	}
 
-	if !slices.Contains(h.secret_key, body.APIKey) {
+	if !utils.Contains(h.secret_key, body.APIKey) {
 		ErrorInternalServer(c, WronApiKey, "Please, ensure that your api_key is valid")
 		return
 	}
 
 	if !utils.IsPhone(body.To) {
 		ErrorBadRequest(c, InvallidPhoneNumber, "Phone number must be in format E.164")
+		return
+	}
+
+	if !utils.Contains(h.numbers, body.From) {
+		ErrorInternalServer(c, BadRequest, "This number not showed in config file")
 		return
 	}
 

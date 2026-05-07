@@ -26,7 +26,7 @@ func Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("clients success parsed")
+	fmt.Println("clients success parsed, clients:", len(clients))
 
 	s, err := addapter.DefaultSmsService()
 	if err != nil {
@@ -34,11 +34,16 @@ func Run(ctx context.Context) error {
 	}
 	fmt.Println("smpp success connected")
 
-	h := handler.NewHandler(nil, s, c)
+	h := handler.NewHandler(clients, s, c)
+
 	r := gin.Default()
 	r.POST("messages", h.Send)
 	r.GET("messages/:id", h.Get)
 
-	fmt.Println("running server")
-	return r.Run()
+	host := fmt.Sprintf("%s:%s",
+		utils.GetEnvD("HOST", "127.0.0.1"),
+		utils.GetEnvD("PORT", "8000"))
+
+	fmt.Println("running server", host)
+	return r.Run(host)
 }
