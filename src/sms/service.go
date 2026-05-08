@@ -10,6 +10,8 @@ import (
 	"github.com/richxcame/gosms/src/addapter"
 	"github.com/richxcame/gosms/src/cache"
 	"github.com/richxcame/gosms/src/handler"
+	"github.com/richxcame/gosms/src/logger"
+	"github.com/richxcame/gosms/src/middleware"
 	"github.com/richxcame/gosms/src/utils"
 )
 
@@ -37,6 +39,10 @@ func Run(ctx context.Context) error {
 	h := handler.NewHandler(clients, s, c)
 
 	r := gin.Default()
+
+	r.Use(middleware.TraceID())
+	r.Use(middleware.Logger(logger.New()))
+
 	r.POST("messages", h.Send)
 	r.GET("messages/:id", h.Get)
 
