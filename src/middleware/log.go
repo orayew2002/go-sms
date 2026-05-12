@@ -7,7 +7,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func Logger(log *zap.Logger) gin.HandlerFunc {
+func Logger(log *zap.Logger, skipIPs ...string) gin.HandlerFunc {
+	skipSet := make(map[string]struct{}, len(skipIPs))
+	for _, ip := range skipIPs {
+		skipSet[ip] = struct{}{}
+	}
+
 	return func(c *gin.Context) {
 
 		start := time.Now()
@@ -17,7 +22,13 @@ func Logger(log *zap.Logger) gin.HandlerFunc {
 		clientIP := c.ClientIP()
 		userAgent := c.Request.UserAgent()
 
+		if _, blocked := skipSet[clientIP]; blocked {
+			c.Next()
+			return
+		}
+
 		traceID, _ := c.Get(TraceIDKey)
+		traceIDStr, _ := traceID.(string)
 
 		c.Next()
 		latency := time.Since(start)
@@ -25,7 +36,7 @@ func Logger(log *zap.Logger) gin.HandlerFunc {
 		statusCode := c.Writer.Status()
 
 		fields := []zap.Field{
-			zap.String("trace_id", traceID.(string)),
+			zap.String("trace_id", traceIDStr),
 			zap.String("method", method),
 			zap.String("path", path),
 			zap.Int("status", statusCode),

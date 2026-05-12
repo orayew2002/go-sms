@@ -17,10 +17,10 @@ func New() *zap.Logger {
 
 	encoderConfig := zapcore.EncoderConfig{
 		TimeKey:        "time",
-		LevelKey:       "",
-		NameKey:        "",
+		LevelKey:       "level",
+		NameKey:        "logger",
 		CallerKey:      "",
-		MessageKey:     "",
+		MessageKey:     "message",
 		StacktraceKey:  "",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.LowercaseLevelEncoder,

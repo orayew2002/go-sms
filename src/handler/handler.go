@@ -64,13 +64,13 @@ func (h *Handler) Send(c *gin.Context) {
 		return
 	}
 
-	if !utils.Contains(h.numbers, body.From) {
-		ErrorInternalServer(c, BadRequest, "This number not showed in config file")
-		return
-	}
-
 	if body.From == "" {
 		body.From = h.default_number
+	}
+
+	if !utils.Contains(h.numbers, body.From) {
+		ErrorBadRequest(c, BadRequest, "This number not showed in config file")
+		return
 	}
 
 	text := utils.GetTextCodec(body.TextType, body.Text)

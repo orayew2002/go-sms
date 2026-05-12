@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,14 +17,17 @@ func R(c *gin.Context, statusCode int, id, message string) {
 }
 
 func ErrorBadRequest(c *gin.Context, id, message string) {
+	_ = c.Error(errors.New(message))
 	R(c, http.StatusBadRequest, id, message)
 }
 
 func ErrorInternalServer(c *gin.Context, id, message string) {
+	_ = c.Error(errors.New(message))
 	R(c, http.StatusInternalServerError, id, message)
 }
 
 func ErrorServiceUnavailable(c *gin.Context, id, message string) {
+	_ = c.Error(errors.New(message))
 	R(c, http.StatusServiceUnavailable, id, message)
 }
 
