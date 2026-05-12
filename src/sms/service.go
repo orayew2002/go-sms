@@ -38,10 +38,16 @@ func Run(ctx context.Context) error {
 
 	h := handler.NewHandler(clients, s, c)
 
-	r := gin.Default()
+	log := logger.New()
 
+	r := gin.New()
+
+	r.Use(gin.Recovery())
 	r.Use(middleware.TraceID())
-	r.Use(middleware.Logger(logger.New()))
+	r.Use(middleware.Logger(log,
+		"172.16.208.240",
+		"172.16.208.235",
+	))
 
 	r.POST("messages", h.Send)
 	r.GET("messages/:id", h.Get)
